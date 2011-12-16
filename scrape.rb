@@ -7,7 +7,7 @@ require "octokit"
 @data = Array.new
 @github = Github.new
 @licenseFilePattern = /licen[cs]e|mit/i
-@outfile = File.open("out.txt", "w")
+@outfile = File.open("out.csv", "w")
 
 def getMaster( author, repo )
 	@githubb = Github.new
@@ -19,18 +19,29 @@ end
 
 def inspectRepo( author, name )
 	puts "Mike", @masterbranch = getMaster( author, name )
-	#puts branch.commit.methods.join(", ")
-	@tree = @github.git_data.tree author, name, @masterbranch["sha"], :recursive => true do |file|
+
+	@found = false
+	@tree = @github.git_data.tree author, name, @masterbranch["sha"] do |file|
 	  if @licenseFilePattern.match file.path
 	  
 	    @gh = Github.new
+	    
 	  	@blog = @gh.get('/repos/' +author+ '/'  +name+ '/git/blobs/' + file.sha)
-		@outfile.syswrite "\t" + file.path + "\n"
-		@licensefile = File.open( 'licenses/' + author + '_' + name + '_' + file.path.gsub('/', '__') , "w")
+	  	@license_file_name = author + '_' + name + '_' + file.path.gsub('/', '__')
+		@licensefile = File.open( 'licenses/' + @license_file_name , "w")
 		@licensefile.syswrite( Base64.decode64(@blog.content) )
+		puts file
+		@outfile.syswrite author + "," + name + ",https://raw.github.com/" + author + "/" + name + "/" +@masterbranch["sha"]+ "/" + file.path + "," + @license_file_name + "\n"
+		@found = true
 	  end
 	end
+	
+	if !@found
+	  @outfile.syswrite author + "," + name + ",n/a,n/a\n"
+	end
 end
+
+@outfile.syswrite "Author,Repo Name,License File URL,License File Name\n"
 
 Octokit.search_repos('game',{:start_page => 2}).each do |result|
   inspectRepo( result.owner, result.name )
