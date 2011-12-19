@@ -26,6 +26,19 @@ def getMaster( author, repo )
   @github.get('/repos/' + author + '/' + repo + '/commits', { :sha => @master_branch } )[0]
 end
 
+def getBlobContents( author, name, file )
+  requestURI = '/repos/' +author+ '/'  +name+ '/git/blobs/' + file.sha
+
+  begin
+    @blog = @github.get(requestURI)
+  rescue
+    printError('Error retrieving file blob. URI: ' + requestURI, author, name )
+    return false
+  end
+
+  Base64.decode64(@blog.content)
+end
+
 def inspectRepo( author, name )
 
   @masterbranch = getMaster( author, name )
@@ -34,32 +47,25 @@ def inspectRepo( author, name )
   @tree = @github.git_data.tree author, name, @masterbranch["sha"] do |file|
     if @filenamePatterns[:license].match file.path
 
-      requestURI = '/repos/' +author+ '/'  +name+ '/git/blobs/' + file.sha
-
-      begin
-        @blog = @github.get(requestURI)
-      rescue
-      	printError('Error retrieving file blob. URI: ' + requestURI, author, name )
+      @content = getBlobContents( author, name, file )
+      if @content == false
         next
       end
       @license_file_name = author + '_' + name + '_' + file.path.gsub('/', '__')
       @licensefile = File.open( 'licenses/' + @license_file_name , "w")
-      @licensefile.syswrite( Base64.decode64(@blog.content) )
+      @licensefile.syswrite( @content )
       @files[:out].syswrite "https://raw.github.com/" + author + "/" + name + "/" +@masterbranch["sha"]+ "/" + file.path + "," + @license_file_name + ",,\n"
       @found = true
 
     elsif @filenamePatterns[:readme].match file.path
 
-      requestURI = '/repos/' +author+ '/'  +name+ '/git/blobs/' + file.sha
-      begin
-        @blog = @github.get(requestURI)
-      rescue
-        printError('Error retrieving file blob. URI: ' + requestURI, author, name )
+      @content = getBlobContents( author, name, file )
+      if @content == false
         next
       end
       @readme_file_name = author + '_' + name + '_' + file.path.gsub('/', '__')
       @licensefile = File.open( 'readmes/' + @readme_file_name , "w")
-      @licensefile.syswrite( Base64.decode64(@blog.content) )
+      @licensefile.syswrite( @content)
       @files[:out].syswrite "https://raw.github.com/" + author + "/" + name + "/" +@masterbranch["sha"]+ "/" + file.path + ",,," + @readme_file_name + "\n"
       @found = true
     end
