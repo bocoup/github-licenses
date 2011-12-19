@@ -20,7 +20,6 @@ def getMaster( author, repo )
 end
 
 def inspectRepo( author, name )
-  puts "Mike", @masterbranch = getMaster( author, name )
 
   @found = false
   @outfile.syswrite author + "," + name + ","
@@ -37,7 +36,6 @@ def inspectRepo( author, name )
       @license_file_name = author + '_' + name + '_' + file.path.gsub('/', '__')
       @licensefile = File.open( 'licenses/' + @license_file_name , "w")
       @licensefile.syswrite( Base64.decode64(@blog.content) )
-      puts "\n\n\n", file, "\n\n\n", "PATH:" + file.path, "\n\n\n"
       @outfile.syswrite "https://raw.github.com/" + author + "/" + name + "/" +@masterbranch["sha"]+ "/" + file.path + "," + @license_file_name + ",,\n"
       @found = true
 
@@ -52,7 +50,6 @@ def inspectRepo( author, name )
       @readme_file_name = author + '_' + name + '_' + file.path.gsub('/', '__')
       @licensefile = File.open( 'readmes/' + @readme_file_name , "w")
       @licensefile.syswrite( Base64.decode64(@blog.content) )
-      puts "\n\n\n", file, "\n\n\n", "PATH:" + file.path, "\n\n\n"
       @outfile.syswrite "https://raw.github.com/" + author + "/" + name + "/" +@masterbranch["sha"]+ "/" + file.path + ",,," + @readme_file_name + "\n"
       @found = true
     end
