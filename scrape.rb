@@ -21,6 +21,7 @@ end
 
 def inspectRepo( author, name )
 
+  @masterbranch = getMaster( author, name )
   @found = false
   @outfile.syswrite author + "," + name + ","
   @tree = @github.git_data.tree author, name, @masterbranch["sha"] do |file|
@@ -39,8 +40,8 @@ def inspectRepo( author, name )
       @outfile.syswrite "https://raw.github.com/" + author + "/" + name + "/" +@masterbranch["sha"]+ "/" + file.path + "," + @license_file_name + ",,\n"
       @found = true
 
-    if @filenamePatterns[:readme].match file.path
-    
+    elsif @filenamePatterns[:readme].match file.path
+
       @gh = Github.new
       begin
         @blog = @gh.get('/repos/' +author+ '/'  +name+ '/git/blobs/' + file.sha)
@@ -54,10 +55,9 @@ def inspectRepo( author, name )
       @found = true
     end
 
-  end
-  
-  if !@found
-    @outfile.syswrite author + "," + name + ",,,,\n"
+    if !@found
+      @outfile.syswrite author + "," + name + ",,,,\n"
+    end
   end
 end
 
